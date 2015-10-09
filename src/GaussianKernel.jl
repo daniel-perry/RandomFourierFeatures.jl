@@ -11,9 +11,9 @@ using Hadamard
 using Distributions
 
 # A set of random fourier functions
-type RandomFourierFunctions
-	directions::Array{Float64,2} # random direction
-	offsets::Array{Float64,1} # random shift in [0,2*pi]
+type RandomFourierFunctions{T}
+	directions::Array{T,2} # random direction
+	offsets::Array{T,1} # random shift in [0,2*pi]
 end
 
 
@@ -22,39 +22,39 @@ end
 #
 # @param X - input data
 # @param RFFs - the random fourier functions
-function RFFProject(X::Array{Float64,2}, RFFs::RandomFourierFunctions)
+function RFFProject{T}(X::Array{T,2}, RFFs::RandomFourierFunctions{T})
 	n = size(X,1)
-	z = sqrt(2 ) * cos( (X * RFFs.directions') .+ ones(n,1) * RFFs.offsets' ) * (1/sqrt(length(RFFs.offsets)))
+	z = convert(Array{T,2}, sqrt(2 ) * cos( (X * RFFs.directions') .+ ones(n,1) * RFFs.offsets' ) * (1/sqrt(length(RFFs.offsets))))
 end
-function RFFProject2(X::Array{Float64,2}, RFFs::RandomFourierFunctions)
+function RFFProject2{T}(X::Array{T,2}, RFFs::RandomFourierFunctions{T})
 	n = size(X,1)
-	z = sqrt(2 ) * cos( (X * RFFs.directions') .+ ones(n,1) * RFFs.offsets' ) * (1/sqrt(length(RFFs.offsets)))
+	z = convert(Array{T,2}, sqrt(2 ) * cos( (X * RFFs.directions') .+ ones(n,1) * RFFs.offsets' ) * (1/sqrt(length(RFFs.offsets))))
 end
 
 
 # @param sigma - Gaussian kernel parameter
 # @param dimension - dimension of input data
 # @param num_functions - how many functions to generate
-function GenerateFunctionsGaussian(sigma, input_dimension, num_functions)
+function GenerateFunctionsGaussian(T, sigma, input_dimension, num_functions)
 	# draw directions from a normal distribution with appropriate sigma corresponding to the kernel:
 	w = randn(num_functions, input_dimension) * (1/sigma)
 
 	# draw random offsets from a uniform distribution in [0,2*pi]
-	b = rand(num_functions) * 2 * pi
+	b = rand(T, (num_functions,)) * 2 * pi
 
 	# construct the random function struct:
-	RandomFourierFunctions(w,b)
+	RandomFourierFunctions{T}(w,b)
 end
-function GenerateFunctionsGaussian2(sigma, input_dimension, num_functions)
+function GenerateFunctionsGaussian2(T, sigma, input_dimension, num_functions)
 	# draw directions from a normal distribution with appropriate sigma corresponding to the kernel:
 	w = randn(num_functions, input_dimension) #* (1/sigma)
 
 	# draw random offsets from a uniform distribution in [0,2*pi]
-	b = rand(num_functions) * 2 * pi
+	b = rand(T,(num_functions,)) * 2 * pi
 	#b = zeros(num_functions)
 
 	# construct the random function struct:
-	RandomFourierFunctions(w,b)
+	RandomFourierFunctions{T}(w,b)
 end
 
 
@@ -115,7 +115,7 @@ end
 type FastFood{T}
 	b::Array{Int64,2}
 	g::Array{T,2}
-	Π::Array{Int64,2}
+	p::Array{Int64,2}
 	s::Array{T,2}
 end
 
@@ -197,7 +197,7 @@ function FFProject{T}(X::Array{T,2}, ff::FastFood{T}, sigma)
 			tmp[:,j] .*= ff.b[:,i]
 		end
 		tmp = fwht_natural(tmp,1)
-		tmp = tmp[ff.Π[:,i],:]
+		tmp = tmp[ff.p[:,i],:]
 		for j=1:m
 			tmp[:,j] .*= ff.g[:,i]*d
 		end
