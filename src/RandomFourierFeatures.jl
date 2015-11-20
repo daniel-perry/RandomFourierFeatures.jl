@@ -6,7 +6,7 @@
 
 module RandomFourierFeatures
 
-export RandomFourierFunctions, GenerateFunctionsGaussian, GenerateFunctionsGaussian2, GenerateFunctionsGaussianBiased, RFFProject, RFFProject2, FastFood, GenerateFastFood, FFProject
+export RandomFourierFunctions, GenerateFunctionsGaussian, GenerateFunctionsGaussianSinCos, GenerateFunctionsGaussianBiased, RFFProject, RFFProjectSinCos, FastFood, GenerateFastFood, FFProject
 
 include("GaussianKernel.jl")
 

@@ -6,7 +6,7 @@
 #
 # Gaussian Kernel Approximation
 
-#using Debug
+using Debug
 using Hadamard
 using Distributions
 
@@ -22,15 +22,30 @@ end
 #
 # @param X - input data
 # @param RFFs - the random fourier functions
+function RFFProject!{T}(z::Array{T,2}, X::Array{T,2}, RFFs::RandomFourierFunctions{T})
+	n = size(X,1)
+	D = size(RFFs.directions,1)
+	z[:,:] = convert(Array{T,2}, (sqrt(2/D)) * cos( (X * RFFs.directions') .+ ones(n,1) * RFFs.offsets' ) )
+end
 function RFFProject{T}(X::Array{T,2}, RFFs::RandomFourierFunctions{T})
-	n = size(X,1)
-	z = convert(Array{T,2}, sqrt(2 ) * cos( (X * RFFs.directions') .+ ones(n,1) * RFFs.offsets' ) * (1/sqrt(length(RFFs.offsets))))
+	z = zeros(T, size(X,1), size(RFFs.directions,1))
+	RFFProject!(z, X, RFFs)
+	return z
 end
-function RFFProject2{T}(X::Array{T,2}, RFFs::RandomFourierFunctions{T})
+# use the sin-cos form instead
+function RFFProjectSinCos!{T}(z::Array{T,2}, X::Array{T,2}, RFFs::RandomFourierFunctions{T})
 	n = size(X,1)
-	z = convert(Array{T,2}, sqrt(2 ) * cos( (X * RFFs.directions') .+ ones(n,1) * RFFs.offsets' ) * (1/sqrt(length(RFFs.offsets))))
+	D = 2*size(RFFs.directions,1)
+	z[:,2:2:end] = X * RFFs.directions'
+	z[:,1:2:end] = convert( Array{T,2}, sin( z[:,2:2:end] ) )
+	z[:,2:2:end] = convert( Array{T,2}, cos( z[:,2:2:end] ) )
+	z[:,:] *= (sqrt(2/D))
 end
-
+function RFFProjectSinCos{T}(X::Array{T,2}, RFFs::RandomFourierFunctions{T})
+	z = zeros(T, size(X,1), 2*size(RFFs.directions,1))
+	RFFProjectSinCos!(z, X, RFFs)
+	return z
+end
 
 # @param sigma - Gaussian kernel parameter
 # @param dimension - dimension of input data
@@ -45,13 +60,16 @@ function GenerateFunctionsGaussian(T, sigma, input_dimension, num_functions)
 	# construct the random function struct:
 	RandomFourierFunctions{T}(w,b)
 end
-function GenerateFunctionsGaussian2(T, sigma, input_dimension, num_functions)
+# use the sin-cos form instead
+function GenerateFunctionsGaussianSinCos(T, sigma, input_dimension, num_functions)
+	if mod(num_functions,2) != 0
+		error("num_functions must be an even number.")
+	end
 	# draw directions from a normal distribution with appropriate sigma corresponding to the kernel:
-	w = randn(num_functions, input_dimension) #* (1/sigma)
+	w = randn(div(num_functions,2), input_dimension) * (1/sigma)
 
 	# draw random offsets from a uniform distribution in [0,2*pi]
-	b = rand(T,(num_functions,)) * 2 * pi
-	#b = zeros(num_functions)
+	b = zeros(1)
 
 	# construct the random function struct:
 	RandomFourierFunctions{T}(w,b)

@@ -12,6 +12,7 @@ using MAT
 
 using RandomFourierFeatures
 using Kernel
+using Debug
 
 
 X = []
@@ -214,6 +215,7 @@ function comparison(X,Xtest,sigma)
 	#for dim=10:100:1000
 	for l=10:10:100
 		dim = inputdim*l
+		#dim = l
 		println("dim: ",dim)
 		err = 0
 		err2 = 0
@@ -226,10 +228,10 @@ function comparison(X,Xtest,sigma)
 		samples = 10
 		for i=1:samples
 			# random fourier features
-			rffs = GenerateFunctionsGaussian(sigma, inputdim, dim)
-			rffs2 = GenerateFunctionsGaussian2(sigma, inputdim, dim)
+			rffs = GenerateFunctionsGaussian(typeof(Xtest[1,1]), sigma, inputdim, dim)
+			rffs2 = GenerateFunctionsGaussianSinCos(typeof(Xtest[1,1]), sigma, inputdim, dim)
 			Xp = RFFProject( Xtest, rffs )
-			Xp2 = RFFProject2( Xtest, rffs2 )
+			Xp2 = RFFProjectSinCos( Xtest, rffs2 )
 			Kp = Xp * Xp'
 			Kp2 = Xp2 * Xp2'
 			#absdiff = abs(K[:] .- Kp[:])
