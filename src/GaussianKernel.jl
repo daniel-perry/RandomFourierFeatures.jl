@@ -6,7 +6,6 @@
 #
 # Gaussian Kernel Approximation
 
-using Debug
 using Hadamard
 using Distributions
 
